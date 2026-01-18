@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { Resend } = require('resend');
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 exports.register = async (req, res) => {
   try {
@@ -45,6 +46,9 @@ exports.register = async (req, res) => {
               <p style="font-size: 16px; color: #374151; text-align: center;">Please verify your email address to activate your parent account.</p>
               <div style="background-color: #f3f4f6; padding: 20px; margin: 20px 0; text-align: center; border-radius: 8px;">
                 <span style="font-size: 32px; letter-spacing: 5px; font-weight: bold; color: #1f2937;">${verificationCode}</span>
+              </div>
+              <div style="text-align: center; margin-bottom: 20px;">
+                <a href="${frontendUrl}/verify-email?email=${email}&code=${verificationCode}" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verify Account</a>
               </div>
               <p style="text-align: center; color: #6b7280; font-size: 14px;">This code will expire in 1 hour.</p>
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
@@ -185,6 +189,9 @@ exports.resendVerificationCode = async (req, res) => {
               <h2 style="color: #2563eb;">New Verification Code</h2>
               <p>You requested a new code for your TinyMath account.</p>
               <p style="font-size: 24px; font-weight: bold; color: #1f2937;">${verificationCode}</p>
+              <div style="margin-top: 20px;">
+                <a href="${frontendUrl}/verify-email?email=${email}&code=${verificationCode}" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verify Account</a>
+              </div>
               <p>This code expires in 1 hour.</p>
             </div>
           `
@@ -333,6 +340,9 @@ exports.forgotPassword = async (req, res) => {
               <h2 style="color: #2563eb;">Password Reset Request</h2>
               <p>Use the code below to reset your password. This code expires in 15 minutes.</p>
               <p style="font-size: 32px; font-weight: bold; color: #1f2937; letter-spacing: 5px;">${resetCode}</p>
+              <div style="margin-top: 20px;">
+                <a href="${frontendUrl}/reset-password?email=${email}&code=${resetCode}" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+              </div>
             </div>
           `
         });
