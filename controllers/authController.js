@@ -2,9 +2,8 @@ const User = require('../models/User');
 const Child = require('../models/Child');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { Resend } = require('resend');
+const axios = require('axios');
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 exports.register = async (req, res) => {
@@ -27,62 +26,49 @@ exports.register = async (req, res) => {
       fullName, email, gender,
       password: hashedPassword,
       verificationCode,
-      verificationCodeExpires: Date.now() + 3600000 // 1 hour
+      verificationCodeExpires: Date.now() + 10 * 60 * 1000 // 10 minutes
     });
 
     await user.save();
 
     // Send Email (Log to console if no API key for dev)
-    if (resend) {
-      try {
-        console.log(`[Resend] Attempting to send verification code to ${email}...`);
-        const { data, error } = await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-          to: email,
-          subject: 'Verify your TinyMath Account',
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
-                <div style="background-color: #2563eb; padding: 20px; text-align: center;">
-                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">TinyMath</h1>
-                </div>
-                <div style="padding: 40px 30px;">
-                  <h2 style="color: #333333; margin-top: 0; text-align: center;">Welcome! 🚀</h2>
-                  <p style="color: #666666; font-size: 16px; line-height: 1.5; text-align: center;">Thank you for registering. Please use the code below to verify your email address.</p>
-                  
-                  <div style="background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; padding: 20px; text-align: center; margin: 30px 0;">
-                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb; display: block;">${verificationCode}</span>
-                  </div>
-
-                  <div style="text-align: center; margin-bottom: 30px;">
-                    <a href="${frontendUrl}/verify-email?email=${email}&code=${verificationCode}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 16px;">Verify Account</a>
-                  </div>
-                  
-                  <p style="color: #999999; font-size: 14px; text-align: center;">This code expires in 1 hour.</p>
-                </div>
-                <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
-                  <p style="color: #aaaaaa; font-size: 12px; margin: 0;">If you didn't create an account, you can safely ignore this email.</p>
-                </div>
-              </div>
-            </body>
-            </html>
-          `
-        });
-
-        if (error) {
-          console.error("[Resend] API Error:", error);
-          // Return the specific error message to help debugging (e.g. "sandbox restricted")
-          return res.status(500).json({ message: `Email sending failed: ${error.message}` });
-        }
-        console.log("[Resend] Email sent successfully:", data);
-      } catch (emailError) {
-        console.error("[Resend] Unexpected Error:", emailError);
-        return res.status(500).json({ message: "Failed to send verification email." });
-      }
-    } else {
-      console.warn("[Resend] API Key is missing in .env. Skipping email send.");
+  try {
+  // Ensure verificationCode is defined before this block!
+  await axios.post('https://api.brevo.com/v3/smtp/email', {
+ sender: { 
+  name: "ABATECH", // Use the name exactly as it appears in Brevo
+  email: "vitalismakuochukwu@gmail.com" 
+},
+    to: [{ email: email }], // 'email' must be the parent's email from req.body
+    subject: `Confirm your TinyMath Account: ${verificationCode}`,
+    htmlContent: `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <div style="background-color: #4A90E2; padding: 25px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">TinyMath Education</h1>
+        </div>
+        <div style="padding: 30px; background-color: #ffffff;">
+          <p style="font-size: 16px; color: #333;">Hello,</p>
+          <p style="font-size: 16px; color: #555;">To finish setting up your parent account, please use the 6-digit verification code below:</p>
+          
+          <div style="margin: 25px 0; background-color: #f0f7ff; padding: 20px; text-align: center; border-radius: 8px; border: 2px solid #4A90E2;">
+            <span style="font-size: 32px; font-weight: bold; color: #000000; letter-spacing: 12px;">${verificationCode}</span>
+          </div>
+          
+          <p style="font-size: 14px; color: #888; text-align: center;">This code will expire in 10 minutes for your security.</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="font-size: 11px; color: #aaa; text-align: center;">Sent by ABATECH TinyMath System</p>
+        </div>
+      </div>`
+  }, {
+    headers: {
+      'api-key': process.env.BREVO_API_KEY,
+      'Content-Type': 'application/json'
+    }
+  });
+  console.log(`✅ Success: Legit email sent to ${email}`);
+    } catch (emailError) {
+      console.error("Brevo Email Error:", emailError.response ? emailError.response.data : emailError.message);
+      return res.status(500).json({ message: "Failed to send verification email." });
     }
 
     res.status(201).json({ message: 'Registration successful. Check email for code.', email });
@@ -148,7 +134,46 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
-    if (!user.isVerified) return res.status(400).json({ message: 'Please verify your email first' });
+    
+    // If user is not verified, generate a new code and send it immediately
+    if (!user.isVerified) {
+      const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+      user.verificationCode = verificationCode;
+      user.verificationCodeExpires = Date.now() + 3600000; // 1 hour
+      await user.save();
+
+      try {
+        await axios.post('https://api.brevo.com/v3/smtp/email', {
+          sender: { name: "TinyMath Support", email: "vitalismakuochukwu@gmail.com" },
+          to: [{ email: email }],
+          subject: `Activate Your Account: ${verificationCode}`,
+          htmlContent: `
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
+              <div style="background-color: #4A90E2; padding: 25px; text-align: center;">
+                <h1 style="color: white; margin: 0; font-size: 24px;">TinyMath Education</h1>
+              </div>
+              <div style="padding: 30px; background-color: #ffffff;">
+                <p style="font-size: 16px; color: #333;">Hello,</p>
+                <p style="font-size: 16px; color: #555;">You tried to login, but your account isn't active yet. Use this code to verify:</p>
+                
+                <div style="margin: 25px 0; background-color: #f0f7ff; padding: 20px; text-align: center; border-radius: 8px; border: 2px solid #4A90E2;">
+                  <span style="font-size: 32px; font-weight: bold; color: #000000; letter-spacing: 12px;">${verificationCode}</span>
+                </div>
+                
+                <p style="font-size: 14px; color: #888; text-align: center;">This code will expire in 1 hour.</p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="font-size: 11px; color: #aaa; text-align: center;">Sent by ABATECH TinyMath System</p>
+              </div>
+            </div>`
+        }, {
+          headers: {
+            'api-key': process.env.BREVO_API_KEY,
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (e) { console.error("Auto-resend failed", e.message); }
+      return res.status(400).json({ message: 'Account not verified. A new code has been sent to your email.' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
@@ -192,43 +217,37 @@ exports.resendVerificationCode = async (req, res) => {
     user.verificationCodeExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    if (resend) {
-      try {
-        const { error } = await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-          to: email,
-          subject: 'New Verification Code - TinyMath',
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
-                <div style="background-color: #2563eb; padding: 20px; text-align: center;">
-                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">TinyMath</h1>
-                </div>
-                <div style="padding: 40px 30px;">
-                  <h2 style="color: #333333; margin-top: 0; text-align: center;">New Verification Code</h2>
-                  <p style="color: #666666; font-size: 16px; line-height: 1.5; text-align: center;">You requested a new code for your TinyMath account.</p>
-                  
-                  <div style="background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; padding: 20px; text-align: center; margin: 30px 0;">
-                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb; display: block;">${verificationCode}</span>
-                  </div>
-
-                  <div style="text-align: center; margin-bottom: 30px;">
-                    <a href="${frontendUrl}/verify-email?email=${email}&code=${verificationCode}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 16px;">Verify Account</a>
-                  </div>
-                  
-                  <p style="color: #999999; font-size: 14px; text-align: center;">This code expires in 1 hour.</p>
-                </div>
+    try {
+      await axios.post('https://api.brevo.com/v3/smtp/email', {
+        sender: { name: "TinyMath Support", email: "vitalismakuochukwu@gmail.com" },
+        to: [{ email: email }],
+        subject: `New Verification Code: ${verificationCode}`,
+        htmlContent: `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
+            <div style="background-color: #4A90E2; padding: 25px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">TinyMath Education</h1>
+            </div>
+            <div style="padding: 30px; background-color: #ffffff;">
+              <p style="font-size: 16px; color: #333;">Hello,</p>
+              <p style="font-size: 16px; color: #555;">You requested a new code for your TinyMath account:</p>
+              
+              <div style="margin: 25px 0; background-color: #f0f7ff; padding: 20px; text-align: center; border-radius: 8px; border: 2px solid #4A90E2;">
+                <span style="font-size: 32px; font-weight: bold; color: #000000; letter-spacing: 12px;">${verificationCode}</span>
               </div>
-            </body>
-            </html>
-          `
-        });
-        if (error) console.error("Resend API Error:", error);
-      } catch (emailError) {
-        console.error("Email sending failed:", emailError);
-      }
+              
+              <p style="font-size: 14px; color: #888; text-align: center;">This code expires in 1 hour.</p>
+              <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="font-size: 11px; color: #aaa; text-align: center;">Sent by ABATECH TinyMath System</p>
+            </div>
+          </div>`
+      }, {
+        headers: {
+          'api-key': process.env.BREVO_API_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError.message);
     }
 
     res.json({ message: 'Verification code resent successfully' });
@@ -358,43 +377,38 @@ exports.forgotPassword = async (req, res) => {
     user.verificationCodeExpires = Date.now() + 15 * 60 * 1000; // 15 mins
     await user.save();
 
-    if (resend) {
-      try {
-        await resend.emails.send({
-          from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
-          to: email,
-          subject: 'Reset Your TinyMath Password',
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
-              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
-                <div style="background-color: #2563eb; padding: 20px; text-align: center;">
-                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">TinyMath</h1>
-                </div>
-                <div style="padding: 40px 30px;">
-                  <h2 style="color: #333333; margin-top: 0; text-align: center;">Password Reset Request</h2>
-                  <p style="color: #666666; font-size: 16px; line-height: 1.5; text-align: center;">Use the code below to reset your password.</p>
-                  
-                  <div style="background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; padding: 20px; text-align: center; margin: 30px 0;">
-                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb; display: block;">${resetCode}</span>
-                  </div>
-
-                  <div style="text-align: center; margin-bottom: 30px;">
-                    <a href="${frontendUrl}/reset-password?email=${email}&code=${resetCode}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 16px;">Reset Password</a>
-                  </div>
-                  
-                  <p style="color: #999999; font-size: 14px; text-align: center;">This code expires in 15 minutes.</p>
-                </div>
+    try {
+      await axios.post('https://api.brevo.com/v3/smtp/email', {
+        sender: { name: "TinyMath Support", email: "vitalismakuochukwu@gmail.com" },
+        to: [{ email: email }],
+        subject: `Reset Your TinyMath Password: ${resetCode}`,
+        htmlContent: `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 500px; margin: auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
+            <div style="background-color: #4A90E2; padding: 25px; text-align: center;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">TinyMath Education</h1>
+            </div>
+            <div style="padding: 30px; background-color: #ffffff;">
+              <p style="font-size: 16px; color: #333;">Hello,</p>
+              <p style="font-size: 16px; color: #555;">We received a request to reset your password. Use the code below:</p>
+              
+              <div style="margin: 25px 0; background-color: #f0f7ff; padding: 20px; text-align: center; border-radius: 8px; border: 2px solid #4A90E2;">
+                <span style="font-size: 32px; font-weight: bold; color: #000000; letter-spacing: 12px;">${resetCode}</span>
               </div>
-            </body>
-            </html>
-          `
-        });
-      } catch (emailError) {
-        console.error("Email sending failed:", emailError);
-        return res.status(500).json({ message: "Failed to send reset email." });
-      }
+              
+              <p style="font-size: 14px; color: #888; text-align: center;">This code expires in 15 minutes.</p>
+              <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="font-size: 11px; color: #aaa; text-align: center;">Sent by ABATECH TinyMath System</p>
+            </div>
+          </div>`
+      }, {
+        headers: {
+          'api-key': process.env.BREVO_API_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError.message);
+      return res.status(500).json({ message: "Failed to send reset email." });
     }
 
     res.json({ message: "Reset code sent to your email!" });
