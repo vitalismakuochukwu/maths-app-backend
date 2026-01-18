@@ -106,6 +106,29 @@ exports.getChildren = async (req, res) => {
   }
 };
 
+exports.getChild = async (req, res) => {
+  try {
+    const child = await Child.findById(req.params.id);
+    if (!child) return res.status(404).json({ message: 'Child not found' });
+    res.json(child);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.updateChild = async (req, res) => {
+  try {
+    const { name, age } = req.body;
+    const child = await Child.findByIdAndUpdate(req.params.id, { name, age }, { new: true });
+    if (!child) return res.status(404).json({ message: 'Child not found' });
+    res.json(child);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.verifyEmail = async (req, res) => {
   try {
     const { email, code } = req.body;
