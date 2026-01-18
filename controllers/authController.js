@@ -41,19 +41,33 @@ exports.register = async (req, res) => {
           to: email,
           subject: 'Verify your TinyMath Account',
           html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
-              <h2 style="color: #2563eb; text-align: center;">Welcome to TinyMath! 🚀</h2>
-              <p style="font-size: 16px; color: #374151; text-align: center;">Please verify your email address to activate your parent account.</p>
-              <div style="background-color: #f3f4f6; padding: 20px; margin: 20px 0; text-align: center; border-radius: 8px;">
-                <span style="font-size: 32px; letter-spacing: 5px; font-weight: bold; color: #1f2937;">${verificationCode}</span>
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <div style="background-color: #2563eb; padding: 20px; text-align: center;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">TinyMath</h1>
+                </div>
+                <div style="padding: 40px 30px;">
+                  <h2 style="color: #333333; margin-top: 0; text-align: center;">Welcome! 🚀</h2>
+                  <p style="color: #666666; font-size: 16px; line-height: 1.5; text-align: center;">Thank you for registering. Please use the code below to verify your email address.</p>
+                  
+                  <div style="background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; padding: 20px; text-align: center; margin: 30px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb; display: block;">${verificationCode}</span>
+                  </div>
+
+                  <div style="text-align: center; margin-bottom: 30px;">
+                    <a href="${frontendUrl}/verify-email?email=${email}&code=${verificationCode}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 16px;">Verify Account</a>
+                  </div>
+                  
+                  <p style="color: #999999; font-size: 14px; text-align: center;">This code expires in 1 hour.</p>
+                </div>
+                <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eeeeee;">
+                  <p style="color: #aaaaaa; font-size: 12px; margin: 0;">If you didn't create an account, you can safely ignore this email.</p>
+                </div>
               </div>
-              <div style="text-align: center; margin-bottom: 20px;">
-                <a href="${frontendUrl}/verify-email?email=${email}&code=${verificationCode}" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verify Account</a>
-              </div>
-              <p style="text-align: center; color: #6b7280; font-size: 14px;">This code will expire in 1 hour.</p>
-              <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-              <p style="text-align: center; color: #9ca3af; font-size: 12px;">If you didn't create an account, you can safely ignore this email.</p>
-            </div>
+            </body>
+            </html>
           `
         });
 
@@ -185,15 +199,30 @@ exports.resendVerificationCode = async (req, res) => {
           to: email,
           subject: 'New Verification Code - TinyMath',
           html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #2563eb;">New Verification Code</h2>
-              <p>You requested a new code for your TinyMath account.</p>
-              <p style="font-size: 24px; font-weight: bold; color: #1f2937;">${verificationCode}</p>
-              <div style="margin-top: 20px;">
-                <a href="${frontendUrl}/verify-email?email=${email}&code=${verificationCode}" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verify Account</a>
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <div style="background-color: #2563eb; padding: 20px; text-align: center;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">TinyMath</h1>
+                </div>
+                <div style="padding: 40px 30px;">
+                  <h2 style="color: #333333; margin-top: 0; text-align: center;">New Verification Code</h2>
+                  <p style="color: #666666; font-size: 16px; line-height: 1.5; text-align: center;">You requested a new code for your TinyMath account.</p>
+                  
+                  <div style="background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; padding: 20px; text-align: center; margin: 30px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb; display: block;">${verificationCode}</span>
+                  </div>
+
+                  <div style="text-align: center; margin-bottom: 30px;">
+                    <a href="${frontendUrl}/verify-email?email=${email}&code=${verificationCode}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 16px;">Verify Account</a>
+                  </div>
+                  
+                  <p style="color: #999999; font-size: 14px; text-align: center;">This code expires in 1 hour.</p>
+                </div>
               </div>
-              <p>This code expires in 1 hour.</p>
-            </div>
+            </body>
+            </html>
           `
         });
         if (error) console.error("Resend API Error:", error);
@@ -336,14 +365,30 @@ exports.forgotPassword = async (req, res) => {
           to: email,
           subject: 'Reset Your TinyMath Password',
           html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h2 style="color: #2563eb;">Password Reset Request</h2>
-              <p>Use the code below to reset your password. This code expires in 15 minutes.</p>
-              <p style="font-size: 32px; font-weight: bold; color: #1f2937; letter-spacing: 5px;">${resetCode}</p>
-              <div style="margin-top: 20px;">
-                <a href="${frontendUrl}/reset-password?email=${email}&code=${resetCode}" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <div style="background-color: #2563eb; padding: 20px; text-align: center;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">TinyMath</h1>
+                </div>
+                <div style="padding: 40px 30px;">
+                  <h2 style="color: #333333; margin-top: 0; text-align: center;">Password Reset Request</h2>
+                  <p style="color: #666666; font-size: 16px; line-height: 1.5; text-align: center;">Use the code below to reset your password.</p>
+                  
+                  <div style="background-color: #f0f7ff; border: 1px solid #cce3ff; border-radius: 6px; padding: 20px; text-align: center; margin: 30px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #2563eb; display: block;">${resetCode}</span>
+                  </div>
+
+                  <div style="text-align: center; margin-bottom: 30px;">
+                    <a href="${frontendUrl}/reset-password?email=${email}&code=${resetCode}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; font-size: 16px;">Reset Password</a>
+                  </div>
+                  
+                  <p style="color: #999999; font-size: 14px; text-align: center;">This code expires in 15 minutes.</p>
+                </div>
               </div>
-            </div>
+            </body>
+            </html>
           `
         });
       } catch (emailError) {
